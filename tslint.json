@@ -1,0 +1,21 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended",
+        "tslint-sonarts"
+    ],
+    "jsRules": {},
+    "rules": {
+        "interface-name": false,
+        "curly": false,
+        "arrow-parens": false,
+        "object-literal-sort-keys": false,
+        "space-before-function-paren": false,
+        "one-line": false,
+        "no-duplicate-string": false,
+        "no-invalid-await": false,
+        "no-small-switch": false,
+        "prefer-immediate-return": false
+    },
+    "rulesDirectory": []
+}
