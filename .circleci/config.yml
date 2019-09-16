@@ -70,6 +70,5 @@ workflows:
             branches:
               ignore: /.*?/
             tags:
-              only:
-                # v1.0.0-1 / v1.0.0-pre1 / v1.0.0
-                - /^v\d+\.\d+\.\d+(\-.+)?$/
+              # v1.0.0-1 / v1.0.0-pre1 / v1.0.0
+              only: /^v\d+\.\d+\.\d+(\-.+)?$/
