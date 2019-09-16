@@ -1,0 +1,37 @@
+{
+  "name": "@gameye/messaging-client",
+  "main": "./node/main.js",
+  "module": "./module/main.js",
+  "types": "./types/main.d.ts",
+  "scripts": {
+    "prepare": "npm run compile",
+    "compile": "tsc && tsc --project tsconfig.module.json",
+    "clean": "rm -rf node types module",
+    "test": "npm run spec-all",
+    "lint": "tslint \"src/**/*.ts\"",
+    "spec": "tape --require \"ts-node/register\"",
+    "spec-all": "npm run spec \"src/**/*.spec.ts\"",
+    "coverage": "nyc --report-dir report --reporter text-summary --reporter lcov --include \"src/**/*.ts\" --exclude \"src/**/*.spec.ts\" --extension \".ts\" npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elmerbulthuis/messaging-client-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elmerbulthuis/messaging-client-node/issues"
+  },
+  "homepage": "https://github.com/elmerbulthuis/messaging-client-node#readme",
+  "engines": {
+    "node": "^10"
+  },
+  "devDependencies": {
+    "nyc": "^14.1.1",
+    "tape": "^4.11.0",
+    "ts-node": "^8.4.1",
+    "tslint": "^5.20.0",
+    "tslint-sonarts": "^1.9.0",
+    "typescript": "^3.6.3"
+  }
+}

@@ -1,0 +1,75 @@
+version: 2
+
+jobs:
+  prepare-node:
+    docker: &docker_node
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
+      - restore_cache:
+          key: npm-
+      - run: npm install
+      - save_cache:
+          key: npm-{{ .Revision }}
+          paths:
+            - ~/.npm
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+            - node
+            - module
+            - types
+
+  lint-node:
+    docker: *docker_node
+    steps:
+      - checkout
+      - attach_workspace: &attach_workspace
+          at: .
+      - run: npm run lint
+
+  spec-node:
+    docker: *docker_node
+    steps:
+      - checkout
+      - attach_workspace: *attach_workspace
+      - run: npm install tap-junit
+      - run: npm run spec-all | $(npm bin)/tap-junit --output "/tmp/test-results/spec"
+      - store_test_results:
+          path: /tmp/test-results
+
+  publish-node:
+    docker: *docker_node
+    steps:
+      - checkout
+      - attach_workspace: *attach_workspace
+      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
+      - run: npm version ${CIRCLE_TAG}
+      - run: npm publish
+
+workflows:
+  version: 2
+  node:
+    jobs:
+      - prepare-node:
+          context: npm-authorized
+          filters: &filter_all
+            tags:
+              only: /.*?/
+      - lint-node: &node_job
+          requires: [ prepare-node ]
+          filters: *filter_all
+      - spec-node: *node_job
+      
+      - publish-node:
+          context: npm-authorized
+          requires: [ prepare-node, lint-node, spec-node ]
+          filters: &filter_publish
+            branches:
+              ignore: /.*?/
+            tags:
+              only:
+                # v1.0.0-1 / v1.0.0-pre1 / v1.0.0
+                - /^v\d+\.\d+\.\d+(\-.+)?$/
