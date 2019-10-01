@@ -13,7 +13,7 @@ export async function invokeHttpCommand(
         {
             "Content-type": "application/json",
         },
-        10 * second,
+        20 * second,
     );
 
     await writeAll(requestStream, JSON.stringify(payload));
