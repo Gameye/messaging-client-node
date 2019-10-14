@@ -17,6 +17,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - .npmrc
             - node_modules
             - node
             - module
@@ -45,7 +46,6 @@ jobs:
     steps:
       - checkout
       - attach_workspace: *attach_workspace
-      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
       - run: npm version ${CIRCLE_TAG}
       - run: npm publish
 
@@ -59,13 +59,13 @@ workflows:
             tags:
               only: /.*?/
       - lint-node: &node_job
-          requires: [ prepare-node ]
+          requires: [prepare-node]
           filters: *filter_all
       - spec-node: *node_job
-      
+
       - publish-node:
           context: npm-authorized
-          requires: [ prepare-node, lint-node, spec-node ]
+          requires: [prepare-node, lint-node, spec-node]
           filters: &filter_publish
             branches:
               ignore: /.*?/
