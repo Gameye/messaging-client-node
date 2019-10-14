@@ -4,20 +4,21 @@ import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
 import { createRequestStream, getResponse, retry } from "../utils";
-import { defaultRequestOptions, RequestOptions } from "./request-options";
+import { defaultRequestConfig, RequestConfig, RequestRetryConfig } from "./request-config";
 
-export async function createHttpEventStreamRetry(
+export function createHttpEventStreamRetry(
     url: string,
     payload: any = {},
-    options?: RequestOptions,
-): Promise<Readable> {
+    options?: RequestRetryConfig,
+): Readable {
     return new ReReadable(
         () => retry(
             () => createHttpEventStream(
-                `${url}`,
+                url,
                 payload,
+                options ? options.requestOptions : undefined,
             ),
-            {},
+            options ? options.retryOptions : undefined,
             error => (error.statusCode && error.statusCode >= 500),
         ),
         { objectMode: true },
@@ -27,10 +28,10 @@ export async function createHttpEventStreamRetry(
 export async function createHttpEventStream(
     url: string,
     payload: any = {},
-    options?: RequestOptions,
+    options?: RequestConfig,
 ): Promise<Readable> {
     const requestOptions = {
-        ...defaultRequestOptions,
+        ...defaultRequestConfig,
         ...options,
     };
 
@@ -47,7 +48,7 @@ export async function createHttpEventStream(
         "GET",
         new URL(url + (search ? `?${search}` : "")),
         headers,
-        requestOptions.timeout,
+        requestOptions.timeout!,
     );
 
     try {
