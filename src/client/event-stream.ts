@@ -1,15 +1,20 @@
 import { ReReadable } from "@gameye/streamkit";
 import { OutgoingHttpHeaders } from "http";
+import { second } from "msecs";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
-import { createRequestStream, getResponse, retry } from "../utils";
-import { defaultRequestConfig, RequestConfig, RequestRetryConfig } from "./request-config";
+import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
+
+export interface EventStreamRequestRetryConfig {
+    requestOptions?: EventStreamRequestConfig;
+    retryOptions?: RetryConfig;
+}
 
 export function createHttpEventStreamRetry(
     url: string,
     payload: any = {},
-    options?: RequestRetryConfig,
+    options?: EventStreamRequestRetryConfig,
 ): Readable {
     return new ReReadable(
         () => retry(
@@ -25,10 +30,21 @@ export function createHttpEventStreamRetry(
     );
 }
 
+export interface EventStreamRequestConfig {
+    heartbeatInterval?: number;
+    timeout?: number;
+    accessToken?: string;
+}
+
+const defaultRequestConfig: EventStreamRequestConfig = {
+    heartbeatInterval: 10 * second,
+    timeout: 20 * second,
+};
+
 export async function createHttpEventStream(
     url: string,
     payload: any = {},
-    options?: RequestConfig,
+    options?: EventStreamRequestConfig,
 ): Promise<Readable> {
     const requestOptions = {
         ...defaultRequestConfig,

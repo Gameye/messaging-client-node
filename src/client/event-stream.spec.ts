@@ -204,6 +204,7 @@ test("http-event-stream-retry 5xx", t => TestContext.with(async ctx => {
     let requestCounter = 0;
 
     for (let i = 0; i < requestCount; i++) {
+        // tslint:disable-next-line: no-identical-functions
         ctx.pushHandler(({ _, response }: Koa.Context) => {
             requestCounter++;
             response.header["content-type"] = "application/x-ndjson";
@@ -236,6 +237,7 @@ test("http-event-stream-retry 5xx4xx", t => TestContext.with(async (ctx) => {
         });
     }
 
+    // tslint:disable-next-line: no-identical-functions
     ctx.pushHandler(({ response }: Koa.Context) => {
         requestCounter++;
         response.header["content-type"] = "application/x-ndjson";
@@ -257,6 +259,7 @@ test("http-event-stream-retry 5xx2xx", t => TestContext.with(async (ctx) => {
     let requestCounter = 0;
 
     for (let i = 0; i < requestCount - 1; i++) {
+        // tslint:disable-next-line: no-identical-functions
         ctx.pushHandler(({ response }: Koa.Context) => {
             requestCounter++;
             response.header["content-type"] = "application/x-ndjson";
