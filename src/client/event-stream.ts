@@ -4,27 +4,35 @@ import { second } from "msecs";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
-import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
+import { createRequestStream, defaultRetryConfig, getResponse, retry, RetryConfig } from "../utils";
 import { Action } from "./action";
 
-export interface EventStreamRequestRetryConfig {
-    requestOptions?: EventStreamRequestConfig;
-    retryOptions?: RetryConfig;
-}
+export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
 export function createHttpEventStreamRetry<T extends Action>(
     url: string,
     payload: T["payload"] = {},
     options?: EventStreamRequestRetryConfig,
 ): Readable {
+    const { heartbeatInterval, timeout, accessToken, retryLimit, intervalCap, intervalBase } = options || {};
     return new ReReadable(
         () => retry(
             () => createHttpEventStream(
                 url,
                 payload,
-                options ? options.requestOptions : undefined,
+                {
+                    ...defaultRequestConfig,
+                    heartbeatInterval,
+                    timeout,
+                    accessToken,
+                },
             ),
-            options ? options.retryOptions : undefined,
+            {
+                ...defaultRetryConfig,
+                retryLimit,
+                intervalBase,
+                intervalCap,
+            },
             error => (error.statusCode && error.statusCode >= 500),
         ),
         { objectMode: true },

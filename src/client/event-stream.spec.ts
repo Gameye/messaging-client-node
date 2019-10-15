@@ -214,8 +214,7 @@ test("http-event-stream-retry 5xx", t => TestContext.with(async ctx => {
     }
 
     // Retry one time less than the total number of requests
-    const retryOptions = { retryLimit: requestCount - 1 };
-    const stream = createHttpEventStreamRetry(ctx.testEndpoint, null, { retryOptions });
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint, null, { retryLimit: requestCount - 1 });
     stream.resume();
     await new Promise(resolve => stream.on("error", (err: Error) => {
         t.equal(err.message, "Internal Server Error", "Got Internal Server Error");

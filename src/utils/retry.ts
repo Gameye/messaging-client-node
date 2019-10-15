@@ -6,7 +6,7 @@ export interface RetryConfig {
     intervalBase?: number;
 }
 
-const defaultConfig = {
+export const defaultRetryConfig = {
     retryLimit: 10,
     intervalCap: 5000,
     intervalBase: 100,
@@ -21,7 +21,7 @@ export async function retry<T>(
         retryLimit,
         intervalBase,
         intervalCap,
-    } = { ...defaultConfig, ...config };
+    } = { ...defaultRetryConfig, ...config };
     let retryAttempt = 0;
     let intervalCurrent = intervalBase;
     while (true) {
