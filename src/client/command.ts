@@ -1,7 +1,7 @@
-import { ReReadable } from "@gameye/streamkit";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
 import { createRequestStream, getResponse, readResponse, writeAll } from "../utils";
+import { Action } from "./action";
 
 export interface CommandRequestConfig {
     timeout?: number;
@@ -12,9 +12,9 @@ const defaultRequestConfig: CommandRequestConfig = {
     timeout: 20 * second,
 };
 
-export async function invokeHttpCommand(
+export async function invokeHttpCommand<T extends Action>(
     url: string,
-    payload: any = {},
+    payload: T["payload"] = {},
     options?: CommandRequestConfig,
 ) {
     const requestOptions = {

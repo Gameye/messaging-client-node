@@ -5,15 +5,16 @@ import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
 import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
+import { Action } from "./action";
 
 export interface EventStreamRequestRetryConfig {
     requestOptions?: EventStreamRequestConfig;
     retryOptions?: RetryConfig;
 }
 
-export function createHttpEventStreamRetry(
+export function createHttpEventStreamRetry<T extends Action>(
     url: string,
-    payload: any = {},
+    payload: T["payload"] = {},
     options?: EventStreamRequestRetryConfig,
 ): Readable {
     return new ReReadable(
@@ -41,9 +42,9 @@ const defaultRequestConfig: EventStreamRequestConfig = {
     timeout: 20 * second,
 };
 
-export async function createHttpEventStream(
+export async function createHttpEventStream<T extends Action>(
     url: string,
-    payload: any = {},
+    payload: T["payload"] = {},
     options?: EventStreamRequestConfig,
 ): Promise<Readable> {
     const requestOptions = {
