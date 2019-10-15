@@ -7,37 +7,13 @@ import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
 import { createRequestStream, defaultRetryConfig, getResponse, retry, RetryConfig } from "../utils";
 
-export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
-
-export function createHttpEventStreamRetry<T extends FluxStandardAction<string, any>>(
-    url: string,
-    payload: T["payload"] = {},
-    options?: EventStreamRequestRetryConfig,
-): Readable {
-    const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
-    const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
-
-    return new ReReadable(
-        () => retry(
-            () => createHttpEventStream(
-                url,
-                payload,
-                requestOptions,
-            ),
-            retryOptions,
-            error => (error.statusCode && error.statusCode >= 500),
-        ),
-        { objectMode: true },
-    );
-}
-
 export interface EventStreamRequestConfig {
     heartbeatInterval?: number;
     timeout?: number;
     accessToken?: string;
 }
 
-const defaultRequestConfig: EventStreamRequestConfig = {
+export const defaultRequestConfig = {
     heartbeatInterval: 10 * second,
     timeout: 20 * second,
 };
@@ -45,19 +21,19 @@ const defaultRequestConfig: EventStreamRequestConfig = {
 export async function createHttpEventStream<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
-    options?: EventStreamRequestConfig,
+    options: EventStreamRequestConfig = {},
 ): Promise<Readable> {
-    const requestOptions = {
+    const config = {
         ...defaultRequestConfig,
         ...options,
-    };
+    } as EventStreamRequestConfig & typeof defaultRequestConfig;
 
     const headers: OutgoingHttpHeaders = {
         "Accept": "application/x-ndjson",
-        "x-heartbeat-interval": String(requestOptions.heartbeatInterval),
+        "x-heartbeat-interval": String(config.heartbeatInterval),
     };
-    if (requestOptions.accessToken) {
-        headers.Authorization = `Bearer: ${requestOptions.accessToken}`;
+    if (config.accessToken) {
+        headers.Authorization = `Bearer: ${config.accessToken}`;
     }
 
     const search = querystring.stringify(payload);
@@ -65,7 +41,7 @@ export async function createHttpEventStream<T extends FluxStandardAction<string,
         "GET",
         new URL(url + (search ? `?${search}` : "")),
         headers,
-        requestOptions.timeout!,
+        config.timeout,
     );
 
     try {
@@ -104,3 +80,48 @@ export async function createHttpEventStream<T extends FluxStandardAction<string,
         throw error;
     }
 }
+
+export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
+
+export const defaultRequestRetryConfig = {
+    ...defaultRetryConfig,
+    ...defaultRequestConfig,
+};
+
+export function createHttpEventStreamRetry<T extends FluxStandardAction<string, any>>(
+    url: string,
+    payload: T["payload"] = {},
+    options: EventStreamRequestRetryConfig = {},
+): Readable {
+    const config = {
+        ...options,
+        ...defaultRequestRetryConfig,
+    } as EventStreamRequestRetryConfig & typeof defaultRequestRetryConfig;
+
+    const {
+        heartbeatInterval, timeout, accessToken,
+        retryLimit, intervalCap, intervalBase,
+    } = config;
+
+    return new ReReadable(
+        () => retry(
+            () => createHttpEventStream(
+                url,
+                payload,
+                {
+                    heartbeatInterval,
+                    timeout,
+                    accessToken,
+                },
+            ),
+            {
+                retryLimit,
+                intervalCap,
+                intervalBase,
+            },
+            error => (error.statusCode && error.statusCode >= 500),
+        ),
+        { objectMode: true },
+    );
+}
+
