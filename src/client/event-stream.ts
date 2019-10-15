@@ -94,8 +94,8 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     options: EventStreamRequestRetryConfig = {},
 ): Readable {
     const config = {
-        ...options,
         ...defaultRequestRetryConfig,
+        ...options,
     } as EventStreamRequestRetryConfig & typeof defaultRequestRetryConfig;
 
     const {
