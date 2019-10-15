@@ -5,7 +5,7 @@ import { second } from "msecs";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
-import { createRequestStream, defaultRetryConfig, getResponse, retry, RetryConfig } from "../utils";
+import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
 
 export interface EventStreamRequestConfig {
     heartbeatInterval?: number;
@@ -13,7 +13,7 @@ export interface EventStreamRequestConfig {
     accessToken?: string;
 }
 
-export const defaultRequestConfig = {
+const defaultRequestConfig = {
     heartbeatInterval: 10 * second,
     timeout: 20 * second,
 };
@@ -83,42 +83,20 @@ export async function createHttpEventStream<T extends FluxStandardAction<string,
 
 export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
-export const defaultRequestRetryConfig = {
-    ...defaultRetryConfig,
-    ...defaultRequestConfig,
-};
-
 export function createHttpEventStreamRetry<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
     options: EventStreamRequestRetryConfig = {},
 ): Readable {
-    const config = {
-        ...defaultRequestRetryConfig,
-        ...options,
-    } as EventStreamRequestRetryConfig & typeof defaultRequestRetryConfig;
-
-    const {
-        heartbeatInterval, timeout, accessToken,
-        retryLimit, intervalCap, intervalBase,
-    } = config;
 
     return new ReReadable(
         () => retry(
             () => createHttpEventStream(
                 url,
                 payload,
-                {
-                    heartbeatInterval,
-                    timeout,
-                    accessToken,
-                },
+                options,
             ),
-            {
-                retryLimit,
-                intervalCap,
-                intervalBase,
-            },
+            options,
             error => (error.statusCode && error.statusCode >= 500),
         ),
         { objectMode: true },

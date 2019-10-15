@@ -6,7 +6,7 @@ export interface RetryConfig {
     intervalBase?: number;
 }
 
-export const defaultRetryConfig = {
+const defaultRetryConfig = {
     retryLimit: 10,
     intervalCap: 5000,
     intervalBase: 100,
