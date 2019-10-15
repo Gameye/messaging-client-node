@@ -7,7 +7,7 @@ import { finished, PassThrough } from "stream";
 import { promisify } from "util";
 import { TestContext } from "../test";
 import { delay } from "../utils";
-import { createHttpEventStream } from "./event-stream";
+import { createHttpEventStream, createHttpEventStreamRetry } from "./event-stream";
 
 const whenFinished = promisify(finished);
 
@@ -164,7 +164,6 @@ function dummyHandler(
         response.status = status;
         const body = new PassThrough();
         response.body = body;
-
         const write = (chunk: any) => new Promise(
             (resolve, reject) => body.write(chunk, error => error ? reject(error) : resolve()),
         );
@@ -179,3 +178,143 @@ function dummyHandler(
         if (doEnd) await end();
     };
 }
+
+test("http-event-stream-retry 4xx", t => TestContext.with(async ctx => {
+    let requestCounter = 0;
+
+    ctx.pushHandler(({ _, response }: Koa.Context) => {
+        requestCounter++;
+        response.header["content-type"] = "application/x-ndjson";
+        response.status = 400;
+        response.message = "Bad Request";
+    });
+
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint);
+    stream.resume();
+    await new Promise(resolve => stream.on("error", (err: Error) => {
+        t.equal(err.message, "Bad Request", "Got bad request");
+        resolve();
+    }));
+
+    t.equal(requestCounter, 1, `Requested ${requestCounter} times`);
+}));
+
+test("http-event-stream-retry 5xx", t => TestContext.with(async ctx => {
+    const requestCount = 5;
+    let requestCounter = 0;
+
+    for (let i = 0; i < requestCount; i++) {
+        // tslint:disable-next-line: no-identical-functions
+        ctx.pushHandler(({ _, response }: Koa.Context) => {
+            requestCounter++;
+            response.header["content-type"] = "application/x-ndjson";
+            response.status = 500;
+            response.message = "Internal Server Error";
+        });
+    }
+
+    // Retry one time less than the total number of requests
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint, undefined, { retryLimit: requestCount - 1 });
+    stream.resume();
+    await new Promise(resolve => stream.on("error", (err: Error) => {
+        t.equal(err.message, "Internal Server Error", "Got Internal Server Error");
+        resolve();
+    }));
+
+    t.equal(requestCounter, requestCount, `Requested ${requestCounter} times`);
+}));
+
+test("http-event-stream-retry 5xx4xx", t => TestContext.with(async (ctx) => {
+    const requestCount = 6;
+    let requestCounter = 0;
+
+    for (let i = 0; i < requestCount - 1; i++) {
+        ctx.pushHandler(({ response }: Koa.Context) => {
+            requestCounter++;
+            response.header["content-type"] = "application/x-ndjson";
+            response.status = 500;
+        });
+    }
+
+    // tslint:disable-next-line: no-identical-functions
+    ctx.pushHandler(({ response }: Koa.Context) => {
+        requestCounter++;
+        response.header["content-type"] = "application/x-ndjson";
+        response.status = 400;
+    });
+
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint);
+    stream.resume();
+    await new Promise(resolve => stream.on("error", (err: Error) => {
+        t.equal(err.message, "Bad Request", `Got ${err.message}`);
+        resolve();
+    }));
+
+    t.equal(requestCounter, requestCount, `Requested ${requestCounter} times`);
+}));
+
+test("http-event-stream-retry 5xx2xx", t => TestContext.with(async (ctx) => {
+    const requestCount = 3;
+    let requestCounter = 0;
+
+    for (let i = 0; i < requestCount - 1; i++) {
+        // tslint:disable-next-line: no-identical-functions
+        ctx.pushHandler(({ response }: Koa.Context) => {
+            requestCounter++;
+            response.header["content-type"] = "application/x-ndjson";
+            response.status = 500;
+        });
+    }
+    const data = { a: 1 };
+
+    ctx.pushHandler(async ({ response }: Koa.Context) => {
+        requestCounter++;
+        response.header["content-type"] = "application/x-ndjson";
+        response.status = 200;
+        const body = new PassThrough();
+        response.body = body;
+
+        const write = (chunk: any) => new Promise(
+            (resolve, reject) => body.write(chunk, error => error ? reject(error) : resolve()),
+        );
+        const end = () => new Promise(
+            resolve => body.end(resolve),
+        );
+
+        await write(JSON.stringify(data));
+        await write("\n");
+        await end();
+    });
+
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint);
+    stream.on("error", () => {
+        t.fail("No errors should occur");
+    });
+    await new Promise(resolve => stream.on("data", chunk => {
+        t.deepEqual(chunk, data);
+        stream.destroy();
+        resolve();
+    }));
+
+    t.equal(requestCounter, requestCount, `Requested ${requestCounter} times`);
+}));
+
+test("http-event-stream-retry options are mixable", t => TestContext.with(async ctx => {
+
+    // tslint:disable-next-line: no-identical-functions
+    ctx.pushHandler(({ request, response }: Koa.Context) => {
+        t.equal(request.header["x-heartbeat-interval"], "10000", "Request heartbeat header matches");
+        t.equal(request.header.authorization, "Bearer: test", "Request Auth header matches");
+        response.header["content-type"] = "application/x-ndjson";
+        response.status = 400;
+    });
+
+    // Have a retry and a request option together and confirm that the correct values go through
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint, null, { intervalCap: 1000, accessToken: "test" });
+    stream.resume();
+    await new Promise(resolve => stream.on("error", (err: Error) => {
+        t.equal(err.message, "Bad Request", "Got Internal Server Error");
+        resolve();
+    }));
+
+}));

@@ -1,19 +1,40 @@
+import { FluxStandardAction } from "flux-standard-action";
+import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
 import { createRequestStream, getResponse, readResponse, writeAll } from "../utils";
 
-export async function invokeHttpCommand(
+export interface CommandRequestConfig {
+    timeout?: number;
+    accessToken?: string;
+}
+
+const defaultRequestConfig: CommandRequestConfig = {
+    timeout: 20 * second,
+};
+
+export async function invokeHttpCommand<T extends FluxStandardAction<string, any>>(
     url: string,
-    payload: any = {},
+    payload: T["payload"] = {},
+    options?: CommandRequestConfig,
 ) {
+    const requestOptions = {
+        ...defaultRequestConfig,
+        ...options,
+    };
+    const headers: OutgoingHttpHeaders = {
+        "Content-type": "application/json",
+    };
+    if (requestOptions.accessToken) {
+        headers.Authorization = `Bearer: ${requestOptions.accessToken}`;
+    }
+
     const urlObj = new URL(url);
 
     const requestStream = createRequestStream(
         "POST",
         urlObj,
-        {
-            "Content-type": "application/json",
-        },
-        20 * second,
+        headers,
+        requestOptions.timeout!,
     );
 
     await writeAll(requestStream, JSON.stringify(payload));

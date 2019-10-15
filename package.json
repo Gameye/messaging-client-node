@@ -15,14 +15,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elmerbulthuis/messaging-client-node.git"
+    "url": "git+ssh://git@github.com/Gameye/messaging-client-node.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/elmerbulthuis/messaging-client-node/issues"
+    "url": "https://github.com/Gameye/messaging-client-node/issues"
   },
-  "homepage": "https://github.com/elmerbulthuis/messaging-client-node#readme",
+  "homepage": "https://github.com/Gameye/messaging-client-node#readme",
   "engines": {
     "node": "^10"
   },
@@ -44,7 +44,9 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
+    "@gameye/streamkit": "^3.2.0",
     "@types/http-errors": "^1.6.2",
+    "flux-standard-action": "^2.1.1",
     "http-errors": "^1.7.3",
     "msecs": "^1.0.0"
   }
