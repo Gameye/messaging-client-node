@@ -1,7 +1,7 @@
+import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
 import { createRequestStream, getResponse, readResponse, writeAll } from "../utils";
-import { Action } from "./action";
 
 export interface CommandRequestConfig {
     timeout?: number;
@@ -12,7 +12,7 @@ const defaultRequestConfig: CommandRequestConfig = {
     timeout: 20 * second,
 };
 
-export async function invokeHttpCommand<T extends Action>(
+export async function invokeHttpCommand<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
     options?: CommandRequestConfig,

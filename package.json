@@ -46,6 +46,7 @@
   "dependencies": {
     "@gameye/streamkit": "^3.2.0",
     "@types/http-errors": "^1.6.2",
+    "flux-standard-action": "^2.1.1",
     "http-errors": "^1.7.3",
     "msecs": "^1.0.0"
   }
