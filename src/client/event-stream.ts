@@ -14,25 +14,17 @@ export function createHttpEventStreamRetry<T extends Action>(
     payload: T["payload"] = {},
     options?: EventStreamRequestRetryConfig,
 ): Readable {
-    const { heartbeatInterval, timeout, accessToken, retryLimit, intervalCap, intervalBase } = options || {};
+    const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
+    const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
+
     return new ReReadable(
         () => retry(
             () => createHttpEventStream(
                 url,
                 payload,
-                {
-                    ...defaultRequestConfig,
-                    heartbeatInterval,
-                    timeout,
-                    accessToken,
-                },
+                requestOptions,
             ),
-            {
-                ...defaultRetryConfig,
-                retryLimit,
-                intervalBase,
-                intervalCap,
-            },
+            retryOptions,
             error => (error.statusCode && error.statusCode >= 500),
         ),
         { objectMode: true },

@@ -298,3 +298,23 @@ test("http-event-stream-retry 5xx2xx", t => TestContext.with(async (ctx) => {
 
     t.equal(requestCounter, requestCount, `Requested ${requestCounter} times`);
 }));
+
+test("http-event-stream-retry options are mixable", t => TestContext.with(async ctx => {
+
+    // tslint:disable-next-line: no-identical-functions
+    ctx.pushHandler(({ request, response }: Koa.Context) => {
+        t.equal(request.header["x-heartbeat-interval"], "10000", "Request heartbeat header matches");
+        t.equal(request.header.authorization, "Bearer: test", "Request Auth header matches");
+        response.header["content-type"] = "application/x-ndjson";
+        response.status = 400;
+    });
+
+    // Have a retry and a request option together and confirm that the correct values go through
+    const stream = createHttpEventStreamRetry(ctx.testEndpoint, null, { intervalCap: 1000, accessToken: "test" });
+    stream.resume();
+    await new Promise(resolve => stream.on("error", (err: Error) => {
+        t.equal(err.message, "Bad Request", "Got Internal Server Error");
+        resolve();
+    }));
+
+}));
