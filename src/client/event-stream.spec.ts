@@ -179,7 +179,7 @@ function dummyHandler(
     };
 }
 
-test.only("http-event-stream-retry 4xx", t => TestContext.with(async ctx => {
+test("http-event-stream-retry 4xx", t => TestContext.with(async ctx => {
     let requestCounter = 0;
 
     ctx.pushHandler(({ _, response }: Koa.Context) => {
@@ -190,10 +190,13 @@ test.only("http-event-stream-retry 4xx", t => TestContext.with(async ctx => {
     });
 
     const stream = createHttpEventStreamRetry(ctx.testEndpoint);
-    const streamPromise = whenFinished(stream);
-    stream.resume();
     try {
-        await streamPromise;
+        await new Promise(
+            (resolve, reject) => stream.
+                on("close", resolve).
+                on("error", reject).
+                resume(),
+        );
         t.fail("should error");
     }
     catch (error) {

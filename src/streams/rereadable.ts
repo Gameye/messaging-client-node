@@ -23,13 +23,6 @@ export class ReReadable extends Readable {
         destroyError: Error | null,
         callback: (error: Error | null) => void,
     ) {
-        if (destroyError) {
-            return callback(destroyError);
-        }
-
-        // prevent premature close errors
-        this.push(null);
-
         this.destroying = true;
         this.destroyInner().
             then(
@@ -70,6 +63,10 @@ export class ReReadable extends Readable {
         if (!inner) return;
 
         inner.destroy();
-        await new Promise(resolve => inner.on("close", resolve));
+        await new Promise(
+            (resolve, reject) => inner.
+                on("error", reject).
+                on("close", resolve),
+        );
     }
 }

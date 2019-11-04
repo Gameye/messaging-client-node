@@ -18,6 +18,8 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
     const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
 
+    const sink = new EndStream({ objectMode: true });
+
     const cancellation = new CancellationController();
     const stream = new ReReadable(
         () => retry(
@@ -33,7 +35,14 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
         { objectMode: true },
     );
     stream.on("close", () => cancellation.cancel());
-    return stream;
+
+    pipeline(
+        stream,
+        sink,
+        error => sink.destroy(error || undefined),
+    );
+
+    return sink;
 }
 
 export interface EventStreamRequestConfig {
