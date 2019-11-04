@@ -1,10 +1,11 @@
 import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
+import { retry, RetryConfig } from "promise-u";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
-import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
+import { createRequestStream, getResponse } from "../utils";
 
 export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
