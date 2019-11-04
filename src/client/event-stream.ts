@@ -2,6 +2,7 @@ import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
 import { retry, RetryConfig } from "promise-u";
+import { CancellationController } from "promise-u";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
@@ -17,6 +18,7 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
     const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
 
+    const cancellation = new CancellationController();
     const stream = new ReReadable(
         () => retry(
             () => createHttpEventStream(
@@ -26,9 +28,11 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
             ),
             retryOptions,
             error => (error.statusCode && error.statusCode >= 500),
+            cancellation,
         ),
         { objectMode: true },
     );
+    stream.on("close", () => cancellation.cancel());
     return stream;
 }
 
