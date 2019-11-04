@@ -1,11 +1,10 @@
-import { ReReadable } from "@gameye/streamkit";
 import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
-import { EndStream, FromJSONTransform, SplitTransform } from "../streams";
-import { createRequestStream, defaultRetryConfig, getResponse, retry, RetryConfig } from "../utils";
+import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
+import { createRequestStream, getResponse, retry, RetryConfig } from "../utils";
 
 export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
@@ -17,7 +16,7 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
     const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
 
-    return new ReReadable(
+    const stream = new ReReadable(
         () => retry(
             () => createHttpEventStream(
                 url,
@@ -29,6 +28,7 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
         ),
         { objectMode: true },
     );
+    return stream;
 }
 
 export interface EventStreamRequestConfig {
