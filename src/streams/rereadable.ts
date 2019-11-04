@@ -23,6 +23,10 @@ export class ReReadable extends Readable {
         destroyError: Error | null,
         callback: (error: Error | null) => void,
     ) {
+        if (destroyError) {
+            return callback(destroyError);
+        }
+
         // prevent premature close errors
         this.push(null);
 
