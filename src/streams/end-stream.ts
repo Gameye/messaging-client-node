@@ -3,15 +3,15 @@ import { PassThrough, pipeline, Readable, TransformOptions } from "stream";
 export class EndStream extends PassThrough {
 
     public static wrap(stream: Readable) {
-        const endStream = new EndStream({ objectMode: true });
+        const sink = new EndStream({ objectMode: true });
 
         pipeline(
             stream,
-            endStream,
-            error => stream.destroy(error || undefined),
+            sink,
+            error => sink.destroy(error || undefined),
         );
 
-        return endStream;
+        return sink;
     }
 
     private ended = false;
