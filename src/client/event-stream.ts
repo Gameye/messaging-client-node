@@ -15,9 +15,6 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     payload: T["payload"] = {},
     options?: EventStreamRequestRetryConfig,
 ): Readable {
-    const { heartbeatInterval, timeout, accessToken, ...retryOptions } = options || {};
-    const { retryLimit, intervalCap, intervalBase, ...requestOptions } = options || {};
-
     const sink = new EndStream({ objectMode: true });
 
     const cancellation = cancellable();
@@ -26,9 +23,9 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
             () => createHttpEventStream(
                 url,
                 payload,
-                requestOptions,
+                options,
             ),
-            retryOptions,
+            options,
             error => {
                 if (
                     error instanceof HttpError &&
