@@ -5,47 +5,101 @@ import { second } from "msecs";
 import { cancellable, retry, RetryConfig } from "promise-u";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
+import { ErrorAction, HttpErrorAction } from "../actions";
 import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
 import { createRequestStream, getResponse } from "../utils";
 
 export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
+/**
+ * create event-stream that will retry forever on http server (>= 500) or
+ * network errors
+ */
+// tslint:disable-next-line: cognitive-complexity
 export function createHttpEventStreamRetry<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
-    options?: EventStreamRequestRetryConfig,
+    options: EventStreamRequestRetryConfig = {},
 ): Readable {
     const sink = new EndStream({ objectMode: true });
 
     const cancellation = cancellable();
     const stream = new ReReadable(
         () => retry(
-            () => createHttpEventStream(
-                url,
-                payload,
-                options,
-            ),
+            async () => {
+                try {
+                    const eventStream = await createHttpEventStream(
+                        url,
+                        payload,
+                        options,
+                    );
+                    return eventStream;
+                }
+                catch (error) {
+                    if (error instanceof HttpError) {
+                        const {
+                            name,
+                            message,
+                            status,
+                        } = error;
+                        sink.write({
+                            type: "http-error",
+                            error: true,
+                            payload: {
+                                name,
+                                message,
+                                status,
+                            },
+                        } as HttpErrorAction);
+
+                        throw error;
+                    }
+
+                    if (error instanceof Error) {
+                        const {
+                            name,
+                            message,
+                            code,
+                        } = error as any;
+                        sink.write({
+                            type: "error",
+                            error: true,
+                            payload: {
+                                name,
+                                message,
+                                code,
+                            },
+                        } as ErrorAction);
+
+                        throw error;
+                    }
+
+                    throw error;
+                }
+            },
             options,
             error => {
                 if (
                     error instanceof HttpError &&
-                    error.statusCode >= 500
+                    error.statusCode < 500
                 ) {
-                    // retry for http errors with status > 500
-                    return true;
+                    // do not retry for http errors with status < 500
+                    return false;
                 }
-                return false;
+                return true;
             },
             cancellation.promise,
         ),
         { objectMode: true },
     );
-    stream.on("close", () => cancellation.cancel());
 
     pipeline(
         stream,
         sink,
-        error => sink.destroy(error || undefined),
+        error => {
+            cancellation.cancel();
+            sink.destroy(error || undefined);
+        },
     );
 
     return sink;
@@ -65,7 +119,7 @@ const defaultRequestConfig: EventStreamRequestConfig = {
 export async function createHttpEventStream<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
-    options?: EventStreamRequestConfig,
+    options: EventStreamRequestConfig = {},
 ): Promise<Readable> {
     const requestOptions = {
         ...defaultRequestConfig,
