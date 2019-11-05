@@ -1,7 +1,7 @@
 import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
 import { second } from "msecs";
-import { retry, RetryConfig, cancellable } from "promise-u";
+import { cancellable, retry, RetryConfig } from "promise-u";
 import * as querystring from "querystring";
 import { pipeline, Readable } from "stream";
 import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
