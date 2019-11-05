@@ -22,71 +22,65 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
     options: EventStreamRequestRetryConfig = {},
 ): Readable {
     const sink = new EndStream({ objectMode: true });
+    const writeError = (error: any) => {
+        if (error instanceof HttpError) {
+            const {
+                name,
+                message,
+                status,
+            } = error;
+            sink.write({
+                type: "http-error",
+                error: true,
+                payload: {
+                    name,
+                    message,
+                    status,
+                },
+            } as HttpErrorAction);
+
+            return;
+        }
+
+        if (error instanceof Error) {
+            const {
+                name,
+                message,
+                code,
+            } = error as any;
+            sink.write({
+                type: "error",
+                error: true,
+                payload: {
+                    name,
+                    message,
+                    code,
+                },
+            } as ErrorAction);
+
+            return;
+        }
+    };
 
     const cancellation = cancellable();
     const stream = new ReReadable(
         () => retry(
-            async () => {
-                try {
-                    const eventStream = await createHttpEventStream(
-                        url,
-                        payload,
-                        options,
-                    );
-                    return eventStream;
-                }
-                catch (error) {
-                    if (error instanceof HttpError) {
-                        const {
-                            name,
-                            message,
-                            status,
-                        } = error;
-                        sink.write({
-                            type: "http-error",
-                            error: true,
-                            payload: {
-                                name,
-                                message,
-                                status,
-                            },
-                        } as HttpErrorAction);
-
-                        throw error;
-                    }
-
-                    if (error instanceof Error) {
-                        const {
-                            name,
-                            message,
-                            code,
-                        } = error as any;
-                        sink.write({
-                            type: "error",
-                            error: true,
-                            payload: {
-                                name,
-                                message,
-                                code,
-                            },
-                        } as ErrorAction);
-
-                        throw error;
-                    }
-
-                    throw error;
-                }
-            },
+            async () => createHttpEventStream(
+                url,
+                payload,
+                options,
+            ),
             options,
             error => {
+                writeError(error);
+
                 if (
                     error instanceof HttpError &&
                     error.statusCode < 500
                 ) {
                     // do not retry for http errors with status < 500
-                    return false;
+                    throw error;
                 }
-                return true;
             },
             cancellation.promise,
         ),
