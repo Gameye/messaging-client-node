@@ -1,5 +1,6 @@
 import { FluxStandardAction } from "flux-standard-action";
 import { OutgoingHttpHeaders } from "http";
+import { HttpError } from "http-errors";
 import { second } from "msecs";
 import { cancellable, retry, RetryConfig } from "promise-u";
 import * as querystring from "querystring";
@@ -28,7 +29,16 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
                 requestOptions,
             ),
             retryOptions,
-            error => (error.statusCode && error.statusCode >= 500),
+            error => {
+                if (
+                    error instanceof HttpError &&
+                    error.statusCode >= 500
+                ) {
+                    // retry for http errors with status > 500
+                    return true;
+                }
+                return false;
+            },
             cancellation.promise,
         ),
         { objectMode: true },

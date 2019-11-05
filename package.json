@@ -48,6 +48,6 @@
     "flux-standard-action": "^2.1.1",
     "http-errors": "^1.7.3",
     "msecs": "^1.0.0",
-    "promise-u": "^2.1.0"
+    "promise-u": "^2.1.1"
   }
 }
