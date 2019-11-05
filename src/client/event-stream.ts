@@ -4,7 +4,7 @@ import { HttpError } from "http-errors";
 import { second } from "msecs";
 import { cancellable, retry, RetryConfig } from "promise-u";
 import * as querystring from "querystring";
-import { pipeline, Readable } from "stream";
+import { pipeline, Readable, Writable } from "stream";
 import { ErrorAction, HttpErrorAction } from "../actions";
 import { EndStream, FromJSONTransform, ReReadable, SplitTransform } from "../streams";
 import { createRequestStream, getResponse } from "../utils";
@@ -12,55 +12,15 @@ import { createRequestStream, getResponse } from "../utils";
 export type EventStreamRequestRetryConfig = EventStreamRequestConfig & RetryConfig;
 
 /**
- * create event-stream that will retry forever on http server (>= 500) or
- * network errors
+ * create event-stream that will retry on http server (>= 500) or
+ * other errors
  */
-// tslint:disable-next-line: cognitive-complexity
 export function createHttpEventStreamRetry<T extends FluxStandardAction<string, any>>(
     url: string,
     payload: T["payload"] = {},
     options: EventStreamRequestRetryConfig = {},
 ): Readable {
     const sink = new EndStream({ objectMode: true });
-    const writeError = (error: any) => {
-        if (error instanceof HttpError) {
-            const {
-                name,
-                message,
-                status,
-            } = error;
-            sink.write({
-                type: "http-error",
-                error: true,
-                payload: {
-                    name,
-                    message,
-                    status,
-                },
-            } as HttpErrorAction);
-
-            return;
-        }
-
-        if (error instanceof Error) {
-            const {
-                name,
-                message,
-                code,
-            } = error as any;
-            sink.write({
-                type: "error",
-                error: true,
-                payload: {
-                    name,
-                    message,
-                    code,
-                },
-            } as ErrorAction);
-
-            return;
-        }
-    };
 
     const cancellation = cancellable();
     const stream = new ReReadable(
@@ -72,7 +32,7 @@ export function createHttpEventStreamRetry<T extends FluxStandardAction<string, 
             ),
             options,
             error => {
-                writeError(error);
+                writeError(sink, error);
 
                 if (
                     error instanceof HttpError &&
@@ -171,4 +131,46 @@ export async function createHttpEventStream<T extends FluxStandardAction<string,
         requestStream.destroy();
         throw error;
     }
+}
+
+function writeError(stream: Writable, error: any) {
+    if (error instanceof HttpError) {
+        const {
+            name,
+            message,
+            status,
+        } = error;
+        stream.write({
+            type: "http-error",
+            error: true,
+            payload: {
+                name,
+                message,
+                status,
+            },
+        } as HttpErrorAction);
+
+        return true;
+    }
+
+    if (error instanceof Error) {
+        const {
+            name,
+            message,
+            code,
+        } = error as any;
+        stream.write({
+            type: "error",
+            error: true,
+            payload: {
+                name,
+                message,
+                code,
+            },
+        } as ErrorAction);
+
+        return true;
+    }
+
+    return false;
 }
