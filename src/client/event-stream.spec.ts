@@ -12,7 +12,7 @@ import { createHttpEventStream, createHttpEventStreamRetry } from "./event-strea
 const whenFinished = promisify(finished);
 
 test("http-event-stream", t => TestContext.with(async ctx => {
-    ctx.pushHandler(async ({ request, response }) => {
+    ctx.pushHandler(({ request, response }) => {
         t.equal(request.method, "GET");
         t.equal(request.path, "/test");
         t.deepEqual(querystring.parse(request.querystring), { a: "1" });
@@ -20,19 +20,11 @@ test("http-event-stream", t => TestContext.with(async ctx => {
         response.status = 200;
         const body = new PassThrough();
         response.body = body;
-
-        const write = (chunk: any) => new Promise(
-            (resolve, reject) => body.write(chunk, error => error ? reject(error) : resolve()),
-        );
-        const end = () => new Promise(
-            resolve => body.end(resolve),
-        );
-
-        await write(JSON.stringify({ b: 3 }));
-        await write("\n");
-        await write(JSON.stringify({ c: 4 }));
-        await write("\n");
-        await end();
+        body.write(JSON.stringify({ b: 3 }));
+        body.write("\n");
+        body.write(JSON.stringify({ c: 4 }));
+        body.write("\n");
+        body.end();
     });
 
     const stream = await createHttpEventStream(
@@ -164,18 +156,12 @@ function dummyHandler(
         response.status = status;
         const body = new PassThrough();
         response.body = body;
-        const write = (chunk: any) => new Promise(
-            (resolve, reject) => body.write(chunk, error => error ? reject(error) : resolve()),
-        );
-        const end = () => new Promise(
-            resolve => body.end(resolve),
-        );
 
         for (const chunk of data) {
-            await write(JSON.stringify(chunk));
-            await write("\n");
+            body.write(JSON.stringify(chunk));
+            body.write("\n");
         }
-        if (doEnd) await end();
+        if (doEnd) body.end();
     };
 }
 
@@ -295,16 +281,9 @@ test("http-event-stream-retry 5xx2xx", t => TestContext.with(async (ctx) => {
         const body = new PassThrough();
         response.body = body;
 
-        const write = (chunk: any) => new Promise(
-            (resolve, reject) => body.write(chunk, error => error ? reject(error) : resolve()),
-        );
-        const end = () => new Promise(
-            resolve => body.end(resolve),
-        );
-
-        await write(JSON.stringify(data));
-        await write("\n");
-        await end();
+        body.write(JSON.stringify(data));
+        body.write("\n");
+        body.end();
     });
 
     const stream = createHttpEventStreamRetry(ctx.testEndpoint);
