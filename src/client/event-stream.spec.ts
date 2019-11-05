@@ -258,11 +258,18 @@ test("http-event-stream-retry 5xx4xx", t => TestContext.with(async (ctx) => {
     });
 
     const stream = createHttpEventStreamRetry(ctx.testEndpoint);
-    stream.resume();
-    await new Promise(resolve => stream.on("error", (err: Error) => {
-        t.equal(err.message, "Bad Request", `Got ${err.message}`);
-        resolve();
-    }));
+    try {
+        await new Promise(
+            (resolve, reject) => stream.
+                on("close", resolve).
+                on("error", reject).
+                resume(),
+        );
+        t.fail("should error");
+    }
+    catch (error) {
+        t.equal(error.message, "Bad Request", `Got ${error.message}`);
+    }
 
     t.equal(requestCounter, requestCount, `Requested ${requestCounter} times`);
 }));
