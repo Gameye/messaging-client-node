@@ -39,7 +39,7 @@ export interface EventStreamRequestConfig {
 
 const defaultRequestConfig: EventStreamRequestConfig = {
     heartbeatInterval: 10 * second,
-    timeout: 20 * second,
+    timeout: 30 * second,
 };
 
 export async function createHttpEventStream<T extends FluxStandardAction<string, any>>(

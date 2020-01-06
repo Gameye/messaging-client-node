@@ -9,7 +9,7 @@ export interface CommandRequestConfig {
 }
 
 const defaultRequestConfig: CommandRequestConfig = {
-    timeout: 20 * second,
+    timeout: 30 * second,
 };
 
 export async function invokeHttpCommand<T extends FluxStandardAction<string, any>>(
