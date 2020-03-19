@@ -8,7 +8,9 @@ import { ReReadable } from "./rereadable";
 const whenFinished = promisify(finished);
 const noStreamError = new Error("no stream");
 const streamWait = (stream: Readable) => new Promise(
-    resolve => stream.once("data", resolve),
+    (resolve, reject) => stream.
+        once("data", resolve).
+        once("error", reject),
 );
 
 test("rereadable happy flow", async t => {
