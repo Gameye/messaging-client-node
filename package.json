@@ -44,8 +44,10 @@
   },
   "dependencies": {
     "@types/http-errors": "^1.6.3",
+    "abort-controller": "^3.0.0",
     "flux-standard-action": "^2.1.1",
     "http-errors": "^1.7.3",
-    "msecs": "^1.0.0"
+    "msecs": "^1.0.0",
+    "node-fetch": "^2.6.0"
   }
 }
