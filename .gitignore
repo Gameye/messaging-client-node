@@ -1,7 +1,7 @@
 .*
 *.log
 /node_modules/
-/report/
+/coverage/
 /node/
 /module/
 /types/

@@ -13,7 +13,7 @@ export async function readAll(stream: Readable) {
     let data = "";
     stream.on("readable", () => {
         let chunk: any;
-        while (Boolean(chunk = stream.read())) {
+        while ((chunk = stream.read())) {
             data += String(chunk);
         }
     });

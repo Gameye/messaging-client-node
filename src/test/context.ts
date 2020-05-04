@@ -23,9 +23,6 @@ export class TestContext {
 
     private readonly handlers = new Array<((ctx: Koa.Context) => PromiseLike<void> | void)>();
 
-    private constructor() {
-    }
-
     public pushHandler(handler: ((ctx: Koa.Context) => PromiseLike<void> | void)) {
         this.handlers.push(handler);
         return handler;

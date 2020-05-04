@@ -24,19 +24,19 @@ export async function retry<T>(
     } = { ...defaultRetryConfig, ...config };
     let retryAttempt = 0;
     let intervalCurrent = intervalBase;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
             const result = await job(retryAttempt);
             return result;
         }
         catch (error) {
-            if (
+            if (!(
                 retryAttempt < retryLimit &&
                 shouldTryAgain(error)
-            ) {
-                error = null;
+            )) {
+                throw error;
             }
-            if (error) throw error;
         }
         // https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
         intervalCurrent = Math.min(intervalCap, randomBetween(intervalBase, intervalCurrent * 3));

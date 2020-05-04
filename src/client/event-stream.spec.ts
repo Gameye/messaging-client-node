@@ -1,9 +1,9 @@
-import * as test from "tape-promise/tape";
 import * as http from "http";
 import * as Koa from "koa";
 import * as querystring from "querystring";
 import { ServerContext } from "server-context";
 import { finished, PassThrough } from "stream";
+import * as test from "tape-promise/tape";
 import { promisify } from "util";
 import { TestContext } from "../test";
 import { delay } from "../utils";
@@ -214,7 +214,11 @@ test("http-event-stream-retry 5xx", t => TestContext.with(async ctx => {
     }
 
     // Retry one time less than the total number of requests
-    const stream = createHttpEventStreamRetry(ctx.testEndpoint, undefined, { retryLimit: requestCount - 1 });
+    const stream = createHttpEventStreamRetry(
+        ctx.testEndpoint,
+        undefined,
+        { retryLimit: requestCount - 1 },
+    );
     stream.resume();
     await new Promise(resolve => stream.on("error", (err: Error) => {
         t.equal(err.message, "Internal Server Error", "Got Internal Server Error");

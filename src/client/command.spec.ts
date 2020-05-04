@@ -1,5 +1,5 @@
-import * as test from "tape-promise/tape";
 import { HttpError } from "http-errors";
+import * as test from "tape-promise/tape";
 import { TestContext } from "../test";
 import { invokeHttpCommand } from "./command";
 
@@ -27,10 +27,10 @@ test("http-command unexpected result", t => TestContext.with(async ctx => {
     catch (error) {
         if (error instanceof HttpError) {
             t.equal(error.statusCode, 400);
-            error = null;
         }
-
-        if (error) throw error;
+        else {
+            throw error;
+        }
     }
 }));
 

@@ -10,7 +10,7 @@ test("does not retry when told not to", async (t) => {
         }
     },
         {},
-        _ => (triesLeft-- > 0),
+        () => (triesLeft-- > 0),
     );
 
     t.doesNotThrow(retryLogic, "did not retry when no tries were left");
