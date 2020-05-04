@@ -1,6 +1,6 @@
 import { FluxStandardAction } from "flux-standard-action";
+import * as createHttpError from "http-errors";
 import fetch from "node-fetch";
-import createHttpError = require("http-errors");
 
 export interface CommandRequestConfig {
     timeout?: number;
