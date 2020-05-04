@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { PassThrough } from "stream";
 import { readAll, timeoutToken, withTimeout } from "./stream-utils";
 

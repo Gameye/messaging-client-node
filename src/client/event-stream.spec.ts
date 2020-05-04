@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import * as http from "http";
 import * as Koa from "koa";
 import * as querystring from "querystring";

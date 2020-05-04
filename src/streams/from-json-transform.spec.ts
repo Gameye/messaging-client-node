@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { FromJSONTransform } from "./from-json-transform";
 
 test("from-json-transform", async t => {

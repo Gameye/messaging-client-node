@@ -1,6 +1,6 @@
 // tslint:disable: no-identical-functions
 
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { finished, PassThrough, Readable } from "stream";
 import { promisify } from "util";
 import { ReReadable } from "./rereadable";

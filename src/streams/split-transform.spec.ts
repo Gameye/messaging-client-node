@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { finished } from "stream";
 import { promisify } from "util";
 import { SplitTransform } from "./split-transform";

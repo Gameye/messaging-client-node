@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { retry } from "./retry";
 
 test("does not retry when told not to", async (t) => {

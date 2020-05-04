@@ -1,4 +1,4 @@
-import * as test from "blue-tape";
+import * as test from "tape-promise/tape";
 import { HttpError } from "http-errors";
 import { TestContext } from "../test";
 import { invokeHttpCommand } from "./command";
