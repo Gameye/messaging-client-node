@@ -7,7 +7,7 @@ export interface CommandRequestConfig {
     accessToken?: string;
 }
 
-export async function invokeHttpCommand<T extends FluxStandardAction<string, unknown>>(
+export async function executeCommand<T extends FluxStandardAction<string, unknown>>(
     url: string,
     payload: T["payload"] = {},
     options?: CommandRequestConfig,

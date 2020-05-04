@@ -24,22 +24,15 @@
   },
   "homepage": "https://github.com/Gameye/messaging-client-node#readme",
   "devDependencies": {
-    "@gameye/server-context": "0.0.3",
-    "@types/koa": "^2.11.3",
-    "@types/koa-bodyparser": "^4.3.0",
     "@types/tape": "^4.13.0",
     "@types/tape-promise": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
     "@typescript-eslint/parser": "^2.30.0",
     "eslint": "^6.8.0",
-    "koa": "^2.11.0",
-    "koa-bodyparser": "^4.3.0",
     "nyc": "^15.0.1",
-    "server-context": "^0.1.1",
     "tape": "^5.0.0",
     "tape-promise": "^4.0.0",
     "ts-node": "^8.10.1",
-    "tslint-sonarts": "^1.9.0",
     "typescript": "^3.8.3"
   },
   "dependencies": {
