@@ -44,6 +44,8 @@ export async function* executeQuery<T extends FluxStandardAction<string, unknown
     })
 
     for await (const line of lines) {
+        if (!line) continue;
+
         const event = JSON.parse(line);
         yield event;
     }

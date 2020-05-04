@@ -38,5 +38,6 @@ export async function executeCommand<T extends FluxStandardAction<string, unknow
     const text = await response.text();
     if (!text) return;
 
-    return JSON.parse(text);
+    const event = JSON.parse(text)
+    return event;
 }
