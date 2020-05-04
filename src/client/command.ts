@@ -1,56 +1,42 @@
 import { FluxStandardAction } from "flux-standard-action";
-import { OutgoingHttpHeaders } from "http";
-import { second } from "msecs";
-import { createRequestStream, getResponse, readResponse, writeAll } from "../utils";
+import fetch from "node-fetch";
+import createHttpError = require("http-errors");
 
 export interface CommandRequestConfig {
     timeout?: number;
     accessToken?: string;
 }
 
-const defaultRequestConfig: CommandRequestConfig = {
-    timeout: 60 * second,
-};
-
-export async function invokeHttpCommand<T extends FluxStandardAction<string, any>>(
+export async function invokeHttpCommand<T extends FluxStandardAction<string, unknown>>(
     url: string,
     payload: T["payload"] = {},
     options?: CommandRequestConfig,
 ) {
-    const requestOptions = {
-        ...defaultRequestConfig,
-        ...options,
-    };
-    const headers: OutgoingHttpHeaders = {
+    const headers: HeadersInit = {
         "Content-type": "application/json",
     };
-    if (requestOptions.accessToken) {
-        headers.Authorization = `Bearer: ${requestOptions.accessToken}`;
+    if (options?.accessToken) {
+        headers.Authorization = `Bearer: ${options?.accessToken}`;
     }
 
-    const urlObj = new URL(url);
+    const response = await fetch(
+        url,
+        {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+            },
+            body: JSON.stringify(payload),
+            timeout: options?.timeout,
+        },
+    )
 
-    const requestStream = createRequestStream(
-        "POST",
-        urlObj,
-        headers,
-        requestOptions.timeout!,
-    );
-
-    await writeAll(requestStream, JSON.stringify(payload));
-
-    try {
-        const responseStream = await getResponse(requestStream);
-        try {
-            const result = await readResponse(responseStream);
-            return result;
-        }
-        finally {
-            responseStream.destroy();
-        }
+    if (!response.ok) {
+        throw createHttpError(response.status);
     }
-    finally {
-        requestStream.abort();
-        requestStream.destroy();
-    }
+
+    const text = await response.text();
+    if (!text) return;
+
+    return JSON.parse(text);
 }
