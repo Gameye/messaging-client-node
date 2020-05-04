@@ -15,7 +15,7 @@ export interface EventStreamRequestConfig {
 
 export async function* executeQuery<T extends FluxStandardAction<string, unknown>>(
     url: string,
-    payload: T["payload"] = {},
+    payload?: T["payload"],
     options?: EventStreamRequestConfig,
 ) {
     const headers: HeadersInit = {
@@ -26,7 +26,7 @@ export async function* executeQuery<T extends FluxStandardAction<string, unknown
         headers.Authorization = `Bearer: ${options.accessToken}`;
     }
 
-    const search = querystring.stringify(payload as querystring.ParsedUrlQueryInput);
+    const search = payload && querystring.stringify(payload as querystring.ParsedUrlQueryInput);
     const response = await fetch(
         url + (search ? `?${search}` : ""),
         {
